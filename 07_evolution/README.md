@@ -1,51 +1,15 @@
 # 第七章 学习、评估与进化
 
-如果智能体每天犯同样的错误，那它就算不上真正的智能。本章探讨智能体的动态进化能力。不同于 LLM 的预训练（Pre-training）是一次性的，智能体的学习（Learning）应该是终身的、持续的。
+如果智能体每天犯同样的错误，那它不是真正的智能。本章探讨智能体的动态进化能力。不同于LLM预训练的一次性，智能体的学习应该是终身的、持续的。通过强化学习(RLHF/RLAIF) → 多维评估体系 → 持续进化机制(经验回放、自我修正、数据飞轮)的完整路径，实现行动→评估→反思→学习的闭环。
 
-本章重点关注强化学习在智能体中的应用，如何建立科学的评估体系来度量智能体的能力，以及如何实现持续的自我进化。
+## 学习目标
 
-## 章节导读
+完成本章后，你将能够：
 
-建议先按“评估基线 → 轨迹可观测 → 持续学习”顺序浏览本章，再按你的项目阶段回看对应小节。
-
-- **[7.1 从反馈中学习：RLHF 与 RLAIF](7.1_rl.md)**
-  - 解析 **人类反馈强化学习 (RLHF)** 及其变体 **AI 反馈强化学习 (RLAIF)**。了解智能体如何通过环境奖励 (Reward) 来调整策略，实现自我改进。
-
-- **[7.2 评估体系：AgentBench 与基准测试](7.2_evaluation.md)**
-  - 智能体很难像分类模型那样用准确率 (Accuracy) 简单评估。本章将介绍 AgentBench、GAIA 等基准测试框架，以及基于轨迹 (Trajectory) 的评估方法。
-
-- **[7.3 轨迹分析与行为可解释性](7.3_tracing.md)**
-  - 当智能体完成一个任务时，它的决策过程是否合理？学习如何记录、分析和解释智能体的行为轨迹，实现可追溯的智能决策。
-
-- **[7.4 持续学习与知识更新](7.4_continuous_learning.md)**
-  - 探讨智能体如何通过经验回放 (Experience Replay) 来微调自身的提示词或记忆库，实现“吃一堑长一智”的持续进化。
-
-- **[7.5 推理能力的提升：从快速响应到深度思考](7.5_reasoning.md)**
-  - 介绍推理增强模型如何通过思维链（Chain of Thought）实现深度推理，审慎对齐（Deliberative Alignment）提升安全性，以及在智能体复杂决策中的应用与成本权衡。
-
-- **[本章小结](summary.md)**
-
-## 核心概念预览
-
-下图展示了智能体的进化循环过程，从行动到评估、反思、学习，形成闭环：
-
-```mermaid
-graph TD
-    %% Agentic Design System
-    classDef agent fill:#e6f7ff,stroke:#1890ff,stroke-width:2px;
-    classDef tool fill:#f6ffed,stroke:#52c41a,stroke-width:2px;
-
-    Action[行动 Action] --> Evaluate[评估 Evaluate]
-    Evaluate --> Reflect[反思 Reflect]
-    Reflect --> Learn[学习 Learn]
-    Learn --> Action
-
-    class Action,Learn tool;
-    class Evaluate,Reflect agent;
-```
-图 7-0：智能体进化循环
-
-下一章将进入实战环节，了解当前主流的智能体开发框架。
+1. **应用** RLHF/RLAIF进行智能体行为微调
+2. **建立** 多维度的评估体系与基准测试
+3. **实现** 轨迹分析与持续学习机制
+4. **优化** 推理能力与对齐安全性
 
 ---
 
