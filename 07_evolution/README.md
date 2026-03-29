@@ -39,11 +39,10 @@ graph TD
     Evaluate --> Reflect[反思 Reflect]
     Reflect --> Learn[学习 Learn]
     Learn --> Action
-    
+
     class Action,Learn tool;
     class Evaluate,Reflect agent;
 ```
-
 图 7-0：智能体进化循环
 
 下一章将进入实战环节，了解当前主流的智能体开发框架。

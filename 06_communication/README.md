@@ -33,12 +33,12 @@ graph TD
         A1[智能体 A] -->|帮我查一下这个数据| B1[智能体 B]
         B1 -->|"理解意图 (有歧义)"| B1Result[结果]
     end
-    
+
     subgraph Structured [结构化通信]
         A2[智能体 A] -->|"JSON: action=query"| B2[智能体 B]
         B2 -->|"JSON解析 (精确)"| B2Result[结果]
     end
-    
+
     class A1,A2,B1,B2 agent;
     class B1Result,B2Result tool;
 ```
