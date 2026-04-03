@@ -15,3 +15,5 @@
 ---
 
 **下一节**: [9.1 设计模式：从 Workflow 到 Agent](9.1_design_patterns.md)
+
+> **新增**：本章新增了 [9.2 Harness 架构](9.2_harness.md)，介绍从 Prompt Engineering → Context Engineering → Harness Engineering 的工程范式演进，以及生产级 Agent Harness 的四大核心子系统。
