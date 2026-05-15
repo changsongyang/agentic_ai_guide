@@ -7,7 +7,7 @@
 * **System 2 vs System 1**：Agent 的核心差异在于自主性与循环机制
 * **PEAS 模型**：Performance, Environment, Actuators, Sensors 的理性智能体框架
 * **四大核心组件**：Brain（规划），Perception（感知），Tools（行动），Memory（记忆）
-* **认知层级 L1-L5**：从反射型到群体型的逐级进化
+* **认知层级 L1-L5**：从辅助型到群体型的逐级进化
 
 ### 下一步
 
