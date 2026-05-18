@@ -105,3 +105,4 @@
   * [12.2 推荐论文与阅读清单](12_appendix/12.2_reading_list.md)
   * [12.3 AGENTS.md 规范指南](12_appendix/12.3_agents_md.md)
   * [12.4 案例模板与检查清单](12_appendix/12.4_case_templates.md)
+  * [12.5 快变事实核验表](12_appendix/12.5_volatile_facts.md)
