@@ -21,4 +21,4 @@
 
 ---
 
-**下一节**: [术语表](../12_appendix/12.1_glossary.md)
+**下一章**: [附录](../12_appendix/README.md)
