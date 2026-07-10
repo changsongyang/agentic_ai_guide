@@ -78,7 +78,8 @@ jobs:
           mdpress build --format pdf --output dist/agentic_ai_guide.pdf
           python3 tools/render_mermaid.py \
             --book-dir . \
-            --svg-out "$RUNNER_TEMP/mermaid-svg"
+            --svg-out "$RUNNER_TEMP/mermaid-svg" \
+            --strict
           python3 tools/build_html_reader.py \
             --book-dir . \
             --title "$title" \

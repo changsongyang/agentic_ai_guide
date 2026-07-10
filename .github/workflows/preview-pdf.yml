@@ -81,7 +81,8 @@ jobs:
           mdpress build --format pdf --output dist/agentic_ai_guide.pdf
           python3 tools/render_mermaid.py \
             --book-dir . \
-            --svg-out "$RUNNER_TEMP/mermaid-svg"
+            --svg-out "$RUNNER_TEMP/mermaid-svg" \
+            --strict
           python3 tools/build_html_reader.py \
             --book-dir . \
             --title "$title" \
@@ -164,7 +165,7 @@ jobs:
               "repos/${GH_REPO}/git/refs/tags/preview-pdf" \
               --raw-field sha="$GITHUB_SHA" \
               --field force=true
-          elif [[ $probe_rc -ne 0 && "$http_status" == "404" ]]; then
+          elif [[ $probe_rc -eq 1 && "$http_status" == "404" ]]; then
             gh api --silent --method POST \
               "repos/${GH_REPO}/git/refs" \
               --raw-field ref="refs/tags/preview-pdf" \
@@ -192,7 +193,7 @@ jobs:
               --title "Latest Preview Publications" \
               --notes-file dist/release-notes.md \
               --prerelease
-          elif [[ "$(tr -d '\r' < "$error_file")" == "release not found" ]]; then
+          elif [[ $release_rc -eq 1 && "$(tr -d '\r' < "$error_file")" == "release not found" ]]; then
             gh release create preview-pdf \
               --title "Latest Preview Publications" \
               --notes-file dist/release-notes.md \

@@ -82,6 +82,11 @@ UPLOAD_RELEASE_COMMAND = [
     "dist/SHA256SUMS",
     "--clobber",
 ]
+PREVIEW_MUTATION_STEPS = (
+    "Synchronize mutable preview tag",
+    "Create or update preview release",
+    "Replace preview assets",
+)
 
 
 FAKE_GH = r'''#!/usr/bin/env python3
@@ -139,6 +144,13 @@ if os.environ.get("GH_REPO") != repository:
     raise SystemExit(2)
 
 if args == get_ref:
+    if scenario == "ref_404_exit2":
+        print("HTTP/2.0 404 Not Found")
+        print("fake gh HTTP 404 with unexpected exit", file=sys.stderr)
+        raise SystemExit(2)
+    if scenario == "ref_404_exit0":
+        print("HTTP/2.0 404 Not Found")
+        raise SystemExit(0)
     if scenario.startswith("ref_network"):
         print("fake gh network failure", file=sys.stderr)
         raise SystemExit(1)
@@ -153,6 +165,9 @@ if args in (patch_ref, post_ref, edit_release, create_release, upload_release):
     raise SystemExit(0)
 
 if args == view_release:
+    if "release_missing_exit2" in scenario:
+        print("release not found", file=sys.stderr)
+        raise SystemExit(2)
     if "release_missing" in scenario:
         print("release not found", file=sys.stderr)
         raise SystemExit(1)
@@ -179,6 +194,36 @@ def workflow_step_script(workflow_text: str, step_name: str) -> str:
     if script_end < 0:
         script_end = len(workflow_text)
     return textwrap.dedent(workflow_text[script_start:script_end])
+
+
+def workflow_job_step_names(workflow_text: str, job_name: str) -> list[str]:
+    lines = workflow_text.splitlines()
+    job_marker = f"  {job_name}:"
+    try:
+        job_start = lines.index(job_marker)
+    except ValueError:
+        return []
+    names: list[str] = []
+    in_steps = False
+    for line in lines[job_start + 1 :]:
+        if re.match(r"^  [A-Za-z0-9_-]+:\s*$", line):
+            break
+        if line == "    steps:":
+            in_steps = True
+            continue
+        if in_steps:
+            match = re.match(r"^      - name:\s*(.+?)\s*$", line)
+            if match:
+                names.append(match.group(1))
+    return names
+
+
+def preview_mutation_step_names(workflow_text: str) -> list[str]:
+    return [
+        name
+        for name in workflow_job_step_names(workflow_text, "publish")
+        if name in PREVIEW_MUTATION_STEPS
+    ]
 
 
 class WorkflowSafetyTests(unittest.TestCase):
@@ -262,6 +307,12 @@ class WorkflowSafetyTests(unittest.TestCase):
             self.assertIn("npm ci --prefix tools/mermaid --ignore-scripts", text, name)
             self.assertIn("tools/mermaid/node_modules/.bin", text, name)
             self.assertIn("tools/render_mermaid.py", text, name)
+            self.assertRegex(
+                text,
+                r"(?s)tools/render_mermaid\.py\s+.*?--book-dir\s+\.\s+"
+                r".*?--svg-out\s+[^\n]+\s+--strict\b",
+                name,
+            )
             self.assertIn("tools/build_html_reader.py", text, name)
             self.assertIn("--pdf", text, name)
             self.assertIn("--html", text, name)
@@ -282,11 +333,7 @@ class WorkflowSafetyTests(unittest.TestCase):
         sha: str = TEST_SHA,
     ) -> tuple[subprocess.CompletedProcess[str], list[list[str]]]:
         preview = self.workflow_text("preview-pdf.yml")
-        step_names = (
-            "Synchronize mutable preview tag",
-            "Create or update preview release",
-            "Replace preview assets",
-        )
+        step_names = preview_mutation_step_names(preview)
         scripts = [workflow_step_script(preview, name) for name in step_names]
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -324,6 +371,23 @@ class WorkflowSafetyTests(unittest.TestCase):
                 else []
             )
             return result, commands
+
+    def test_preview_mutation_steps_are_declared_in_exact_yaml_order(self):
+        preview = self.workflow_text("preview-pdf.yml")
+        self.assertEqual(preview_mutation_step_names(preview), list(PREVIEW_MUTATION_STEPS))
+
+    def test_preview_order_reader_detects_yaml_step_swaps(self):
+        preview = self.workflow_text("preview-pdf.yml")
+        first, second, third = PREVIEW_MUTATION_STEPS
+        swapped = preview.replace(first, "__FIRST__", 1)
+        swapped = swapped.replace(second, first, 1).replace("__FIRST__", second, 1)
+        self.assertEqual(
+            preview_mutation_step_names(swapped),
+            [second, first, third],
+        )
+        self.assertNotEqual(
+            preview_mutation_step_names(swapped), list(PREVIEW_MUTATION_STEPS)
+        )
 
     def test_preview_updates_existing_tag_release_then_assets_in_exact_order(self):
         result, commands = self.run_preview_scripts("ref_200_release_exists")
@@ -376,8 +440,23 @@ class WorkflowSafetyTests(unittest.TestCase):
                 expected = "network failure" if scenario.endswith("network") else scenario[4:]
                 self.assertIn(expected, result.stderr)
 
+    def test_preview_tag_404_requires_the_exact_expected_exit_code(self):
+        for scenario in ("ref_404_exit2", "ref_404_exit0"):
+            with self.subTest(scenario=scenario):
+                result, commands = self.run_preview_scripts(scenario)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(commands, [GET_REF_COMMAND])
+                self.assertNotIn(POST_REF_COMMAND, commands)
+
     def test_preview_release_lookup_fails_closed_on_unknown_errors(self):
-        for scenario in ("ref_200_release_401", "ref_200_release_network"):
+        for scenario in (
+            "ref_200_release_401",
+            "ref_200_release_403",
+            "ref_200_release_429",
+            "ref_200_release_503",
+            "ref_200_release_network",
+            "ref_200_release_missing_exit2",
+        ):
             with self.subTest(scenario=scenario):
                 result, commands = self.run_preview_scripts(scenario)
                 self.assertNotEqual(result.returncode, 0)

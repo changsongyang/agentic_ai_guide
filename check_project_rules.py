@@ -160,11 +160,21 @@ def check_volatile_facts(
             issues.append(f"{name}: invalid volatile facts date: {exc}")
         else:
             ttl_days = int(metadata.group(3))
+            current_date = today or date.today()
+            if expires_at <= verified_at:
+                issues.append(
+                    f"{name}: volatile facts expires_at must be after verified_at"
+                )
             if ttl_days != 30 or expires_at != verified_at + timedelta(days=30):
                 issues.append(
                     f"{name}: volatile facts TTL must describe exactly 30 days"
                 )
-            if (today or date.today()) > expires_at:
+            if verified_at > current_date:
+                issues.append(
+                    f"{name}: volatile facts verified_at is in the future "
+                    f"({verified_at.isoformat()})"
+                )
+            if current_date > expires_at:
                 issues.append(
                     f"{name}: volatile facts ledger expired on {expires_at.isoformat()}"
                 )

@@ -50,6 +50,30 @@ class VolatileFactsTests(unittest.TestCase):
             issues = check_volatile(self, path, date(2026, 8, 10))
             self.assertTrue(any("expired" in issue for issue in issues), issues)
 
+    def test_verification_date_cannot_be_in_the_future(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_ledger(
+                directory, verified="2026-07-11", expires="2026-08-10"
+            )
+            issues = check_volatile(self, path, date(2026, 7, 10))
+            self.assertTrue(any("future" in issue for issue in issues), issues)
+
+    def test_expiry_cannot_precede_verification(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_ledger(
+                directory, verified="2026-07-10", expires="2026-07-09"
+            )
+            issues = check_volatile(self, path, date(2026, 7, 10))
+            self.assertTrue(any("after verified_at" in issue for issue in issues), issues)
+
+    def test_verification_and_expiry_boundaries_are_inclusive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.write_ledger(directory)
+            self.assertEqual(check_volatile(self, path, date(2026, 7, 10)), [])
+            self.assertEqual(check_volatile(self, path, date(2026, 8, 9)), [])
+            issues = check_volatile(self, path, date(2026, 8, 10))
+            self.assertTrue(any("expired" in issue for issue in issues), issues)
+
     def test_ttl_metadata_must_describe_exactly_30_days(self):
         with tempfile.TemporaryDirectory() as directory:
             path = self.write_ledger(directory, expires="2026-09-08", ttl=60)
